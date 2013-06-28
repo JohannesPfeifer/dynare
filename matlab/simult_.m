@@ -1,4 +1,4 @@
-function y_=simult_(y0,dr,ex_,iorder)
+function [y_, y1st, y2nd, y3rd]=simult_(y0,dr,ex_,iorder,y1st_start,y2nd_start,y3rd_start)
 % Simulates the model using a perturbation approach, given the path for the exogenous variables and the
 % decision rules.
 %
@@ -8,9 +8,22 @@ function y_=simult_(y0,dr,ex_,iorder)
 %    dr       [struct]   matlab's structure where the reduced form solution of the model is stored.
 %    ex_      [double]   T*q matrix of innovations.
 %    iorder   [integer]  order of the taylor approximation.
-%
+%    y1st_start [double]   n*1 vector, initial value for linear term in
+%                          pruned state space
+%    y2nd_start [double]   n*1 vector, initial value for quadratic term in
+%                          pruned state space
+%    y3rd_start [double]   n*1 vector, initial value for cubic term in
+%                          pruned state space
+
 % OUTPUTS
-%    y_       [double]   n*(T+1) time series for the endogenous variables.
+%    y_         [double]   n*(T+1) time series for the endogenous variables.
+%
+%    y1st       [double]   n*(T+1) time series for the linear term of the
+%                          pruned state space
+%    y2nd       [double]   n*(T+1) time series for the quadratic term of the
+%                          pruned state space
+%    y3rd       [double]   n*(T+1) time series for the cubic term of the
+%                          pruned state space
 %
 % SPECIAL REQUIREMENTS
 %    none
@@ -40,6 +53,11 @@ exo_nbr = M_.exo_nbr;
 
 y_ = zeros(size(y0,1),iter+M_.maximum_lag);
 y_(:,1) = y0;
+if nargout>1 || nargin > 5
+    y1st=zeros(size(y0,1),iter+M_.maximum_lag);
+    y2nd=zeros(size(y0,1),iter+M_.maximum_lag); 
+    y3rd=zeros(size(y0,1),iter+M_.maximum_lag);
+end
 
 if options_.loglinear && ~options_.logged_steady_state
     dr.ys=log(dr.ys);
@@ -106,7 +124,11 @@ else
       case 2
         constant = dr.ys(order_var)+.5*dr.ghs2;
         if options_.pruning
-            y__ = y0;
+            if nargin<5
+                y__ = y0;
+            else
+                y__=y1st_start;
+            end
             for i = 2:iter+M_.maximum_lag
                 yhat1 = y__(order_var(k2))-dr.ys(order_var(k2));
                 yhat2 = y_(order_var(k2),i-1)-dr.ys(order_var(k2));
@@ -120,6 +142,7 @@ else
                 y_(order_var,i) = constant + dr.ghx*yhat2 + dr.ghu*epsilon ...
                     + abcOut1 + abcOut2 + abcOut3;
                 y__(order_var) = dr.ys(order_var) + dr.ghx*yhat1 + dr.ghu*epsilon;
+                y1st(:,i)=y__;
             end
         else
             for i = 2:iter+M_.maximum_lag
@@ -157,9 +180,23 @@ else
         %construction follows Andreasen et al (2013), Technical
         %Appendix, Formulas (65) and (66)
         %split into first, second, and third order terms
-        yhat1 = y0(order_var(k2))-dr.ys(order_var(k2));
-        yhat2 = zeros(nspred,1);
-        yhat3 = zeros(nspred,1);
+        if nargin<5
+            yhat1 = y0(order_var(k2))-dr.ys(order_var(k2));
+            yhat2 = zeros(nspred,1);
+            yhat3 = zeros(nspred,1);
+        elseif nargin==5
+            yhat1=y1st_start(order_var(k2));
+            yhat2 = zeros(nspred,1);
+            yhat3 = zeros(nspred,1);       
+        elseif nargin==6
+            yhat1 = y1st_start(order_var(k2));
+            yhat2 = y2nd_start(order_var(k2));
+            yhat3 = zeros(nspred,1);       
+        elseif nargin==7
+            yhat1 = y1st_start(order_var(k2));
+            yhat2 = y2nd_start(order_var(k2));
+            yhat3 = y3rd_start(order_var(k2));       
+        end
         for i=2:iter+M_.maximum_lag
             u = ex_(i-1,:)';
             %construct terms of order 2 from second order part, based
@@ -196,6 +233,9 @@ else
             yhat2 = ghx*yhat2 + 1/2*(gyy + guu + 2*gyu + ghs2);
             yhat1 = ghx*yhat1 + ghu*u;
             y_(order_var,i) = dr.ys(order_var)+yhat1 + yhat2 + yhat3; %combine terms again
+            y1st(order_var,i)= yhat1;
+            y2nd(order_var,i)= yhat2;
+            y3rd(order_var,i)= yhat3;
             yhat1 = yhat1(ipred);
             yhat2 = yhat2(ipred);
             yhat3 = yhat3(ipred);
