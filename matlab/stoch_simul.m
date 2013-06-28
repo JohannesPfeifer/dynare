@@ -189,6 +189,14 @@ if options_.nomoments == 0
         % There is no code for theoretical moments at 3rd order
         if options_.order <= 2
             oo_=disp_th_moments(oo_.dr,var_list,M_,options_,oo_);
+        elseif options_.order == 3 && options_.pruning
+            try
+            [oo_.gamma_y, oo_.mean, oo_.variance, oo_.autocorr]=disp_th_moments_order3(oo_.dr,M_,options_,i_var);
+            catch err_thirdordermoments
+                fprintf('\nSTOCH_SIMUL: Analytical moments at third order lead to an error. Execution cancelled.\n')
+                disp(err_thirdordermoments.message)
+                fprintf('\n')
+            end
         end
     else
         oo_=disp_moments(oo_.endo_simul,var_list,M_,options_,oo_);
