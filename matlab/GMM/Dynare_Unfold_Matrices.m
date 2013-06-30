@@ -55,6 +55,12 @@ if error_mes ~= 0
     fprintf('\nThe covariance matrix of the structural shocks is not positive definite.\n');
     fprintf('I continue the simulations using only the diagonal of the covariance matrix.\n');
 end
+% set singular covariance entries to 0
+singular_entries=find(diag(M_.Sigma_e)==0);
+if ~isempty(singular_entries)
+    sigma(singular_entries,:)=0;
+    sigma(:,singular_entries)=0;
+end
 
 % Steady states
 f_s0 =  dr_.ys(dr_.order_var); %bring in DR order
