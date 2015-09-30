@@ -832,6 +832,49 @@ options_.figures.textwidth=0.8;
 
 options_.varobs_id=[]; %initialize field
 
+%Maximum array size for analytical moment computation
+options_.max_memory_share=.25;
+
+%IRFs
+options_.irf_opt.generalized_irf=0;
+options_.irf_opt.ergodic_mean_irf=0;
+options_.irf_opt.EM.drop=5000;
+options_.irf_opt.EM.tolf=1e-12;
+options_.irf_opt.percent=0;
+options_.irf_opt.irf_shocks=[];
+
+%GMM
+options_.gmm.decisionrules=0; %activate GMM estimation
+options_.gmm.order=3; %order of approximation for GMM 
+options_.gmm.centeredmoments=0; % use centered moments
+options_.gmm.verbose=1;
+options_.gmm.autolag=1:5; %number of autocovariances
+options_.gmm.recursive_estimation=1; %start at order=1 and iterate over higher orders
+options_.gmm.mode_compute=9;
+options_.gmm.irf=20; %number of periods for GIRFs 
+options_.gmm.qLag=10; %bandwith in optimal weighting matrix
+options_.gmm.optimal_weighting=1; %dummy for use of optimal weighting matrix
+options_.gmm.firstmoment_selector=[]; %selector matrix to choose individual first moments
+options_.gmm.use_prior=0; %use prior
+
+%SMM
+options_.smm.decisionrules=0;%activate SMM estimation
+options_.smm.order=3; %order of approximation for SMM 
+options_.smm.centeredmoments=0; % use centered moments
+options_.smm.verbose=1;
+options_.smm.autolag=1:5; %number of autocovariances
+options_.smm.recursive_estimation=1;  %start at order=1 and iterate over higher orders
+options_.smm.mode_compute=9;
+options_.smm.irf=20; %number of periods for GIRFs 
+options_.smm.qLag=10; %bandwith in optimal weighting matrix
+options_.smm.optimal_weighting=1; %dummy for use of optimal weighting matrix
+options_.smm.firstmoment_selector=[]; %selector matrix to choose individual first moments
+options_.smm.use_prior=0; %use prior
+options_.smm.simulation_multiple=5; %multiple of the data length used for simulation
+options_.smm.drop=500; % number of periods dropped at beginning of simulation
+options_.smm.seed=1; %seed used in simulations
+options_.smm.bounded_support=0; %trim shocks in simulation to +- 2 stdev
+
 % initialize persistent variables in priordens()
 priordens([],[],[],[],[],[],1);
 % initialize persistent variables in dyn_first_order_solver()
