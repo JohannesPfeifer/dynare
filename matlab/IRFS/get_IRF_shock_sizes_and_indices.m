@@ -1,15 +1,18 @@
-function [cs, SS, irf_shocks_indx]=get_IRF_shock_sizes_and_indices(M_,options_)
-% function  [cs, SS]=get_IRF_shock_sizes(M_,options_)
+function [cs, irf_shocks_indx, irf_names, titles, titTeX]=get_IRF_shock_sizes_and_indices(M_,options_)
+% function  [cs, irf_shocks_indx, irf_names, titles, titTeX]=get_IRF_shock_sizes_and_indices(M_,options_)
 % gets shock sizes for IRFS 
 %
 % INPUTS
 %   M_:                 Matlab's structure describing the Model (initialized by dynare, see @ref{M_}).
 %   options_:           Matlab's structure describing the options (initialized by dynare, see @ref{options_}).
-%   irf_shocks_indx:    indices of shock vectors in cs
+%
 % OUTPUTS
 %   cs:                 matrix with IRF shocks in columns
-%   SS:                 Covariance matrix
-
+%   irf_shocks_indx:    indices of shock vectors in cs
+%   irf_names:          names for title and saving
+%   titles:             figure titles
+%   titTeX:             titles for LaTeX
+%
 % SPECIAL REQUIREMENTS
 %   none
 
@@ -31,35 +34,96 @@ function [cs, SS, irf_shocks_indx]=get_IRF_shock_sizes_and_indices(M_,options_)
 % along with Dynare.  If not, see <http://www.gnu.org/licenses/>.
 
 if ~isempty(options_.irf_opt.irf_shocks) %if shock size specified
-    if options_.irf_opt.stderr  % if specified in terms of standard deviations
-        if options_.irf_opt.nonorthogonal %if no orthogonalization
-            SS(M_.exo_names_orig_ord,M_.exo_names_orig_ord)=M_.Sigma_e+1e-14*eye(M_.exo_nbr);
-            cs = transpose(chol(SS));
-            cs = options_.irf_opt.irf_shocks'*cs; 
+    if options_.irf_opt.stderr_multiples  % if specified in terms of standard deviations
+        if options_.irf_opt.diagonal_only %if only diagonal entries
+            if options_.irf_opt.generalized_irf              
+                [inv_chol_s]=get_inv_chol_covar_mat(M_.Sigma_e,0);                
+                cs=inv_chol_s*(diag(sqrt(diag(M_.Sigma_e)))*options_.irf_opt.irf_shocks);   %already in standard deviations
+            else
+                cs=diag(sqrt(diag(M_.Sigma_e)))*options_.irf_opt.irf_shocks;
+            end
         else %orthogonalization
-            cs=options_.irf_opt.irf_shocks'.*(sqrt(diag(M_.Sigma_e))*ones(1,M_.exo_nbr));
+            if options_.irf_opt.generalized_irf %already in standard deviations, use correlation matrix
+                cs = options_.irf_opt.irf_shocks;       
+            else
+                [chol_s]=get_chol_covar_mat(M_.Sigma_e);                
+                cs = chol_s*options_.irf_opt.irf_shocks; 
+            end
         end        
     else % if specified in absolute terms       
-        if options_.irf_opt.nonorthogonal %if no orthogonalization
-            cs=options_.irf_opt.irf_shocks; 
-        else %orthogonalization
-            %compute correlation matrix
-            Correlation_matrix = diag(1./sqrt(diag(M_.Sigma_e)))*M_.Sigma_e*diag(1./sqrt(diag(M_.Sigma_e)));
-            % Remove NaNs appearing because of variances calibrated to zero.
-            if any(isnan(Correlation_matrix))
-                zero_variance_idx = find(~diag(M_.Sigma_e));
-                for i=1:length(zero_variance_idx)
-                    Correlation_matrix(zero_variance_idx(i),:) = 0;
-                    Correlation_matrix(:,zero_variance_idx(i)) = 0;
-                    Correlation_matrix(zero_variance_idx(i),zero_variance_idx(i))=1;
-                end        
+        if options_.irf_opt.diagonal_only %if only diagonal entries
+            if options_.irf_opt.generalized_irf %bring into in standard deviations
+                [inv_chol_diag_s]=get_inv_chol_covar_mat(M_.Sigma_e,options_.irf_opt.diagonal_only);  
+                cs = inv_chol_diag_s*options_.irf_opt.irf_shocks;
+            else
+                cs=options_.irf_opt.irf_shocks;
             end
-            cs=options_.irf_opt.irf_shocks'.*Correlation_matrix;
+        else %orthogonalization        
+            if options_.irf_opt.generalized_irf %bring into in standard deviations
+                [inv_chol_s]=get_inv_chol_covar_mat(M_.Sigma_e,1);  
+                cs = inv_chol_s*options_.irf_opt.irf_shocks;
+            else
+                [inv_chol_diag_s]=get_inv_chol_covar_mat(M_.Sigma_e,1);  
+                [chol_s]=get_chol_covar_mat(M_.Sigma_e);                
+                cs = chol_s*(inv_chol_diag_s*options_.irf_opt.irf_shocks);
+            end
         end
     end
-    irf_shocks_indx = (1:length(cs));
+    n_irfs=size(cs,2);
+    irf_shocks_indx = (1:n_irfs);
+    % set the titles
+    if isempty(options_.irf_opt.irf_shock_graphtitles)
+        irf_names='shock_vec_1';
+        titles='shock_vec_1';
+        for ii=1:n_irfs
+            irf_names = char(irf_names, ['shock_vec_',num2str(ii+1)]);
+            titles = char(titles, ['shock_vec_',num2str(ii+1)]);
+        end
+        if options_.TeX
+            titTeX(M_.exo_names_orig_ord,:) = M_.exo_names_tex; %to be fixed
+        else
+            titTeX=[];
+        end
+    else
+%         for ii=1:n_irfs
+%             if regexp(fname, '[/\*:?"<>|]', 'once')
+% 
+%             end
+%           end
+        if size(options_.irf_opt.irf_shock_graphtitles,1)~=n_irfs
+            error('Number of Titles and number of irfs do not match');
+        end
+        irf_names=options_.irf_opt.irf_shock_graphtitles;
+        titles=options_.irf_opt.irf_shock_graphtitles;
+        if options_.TeX
+            titTeX(M_.exo_names_orig_ord,:) = M_.exo_names_tex; %to be fixed
+        else
+            titTeX=[];
+        end       
+    end   
 else  %if shock size not specified  
-    SS(M_.exo_names_orig_ord,M_.exo_names_orig_ord)=M_.Sigma_e+1e-14*eye(M_.exo_nbr);
-    cs = transpose(chol(SS));
+    if options_.irf_opt.generalized_irf %bring into in standard deviations
+        if options_.irf_opt.diagonal_only %if only diagonal entries
+            [inv_chol_s]=get_inv_chol_covar_mat(M_.Sigma_e,options_.irf_opt.diagonal_only);  
+            cs = inv_chol_s*diag(sqrt(diag(M_.Sigma_e)));
+        else
+            cs = eye(size(M_.Sigma_e));
+        end   
+    else
+        if options_.irf_opt.diagonal_only %if only diagonal entries
+           cs = diag(sqrt(diag(M_.Sigma_e))); 
+        else
+           [cs]=get_chol_covar_mat(M_.Sigma_e);                
+        end
+    end
     irf_shocks_indx = getIrfShocksIndx();
+    irf_names=M_.exo_names;
+    titles =M_.exo_names ;
+    if options_.TeX
+        titTeX(M_.exo_names_orig_ord,:) = M_.exo_names_tex; %to be fixed
+    else
+        titTeX=[];
+    end
+end
+   
 end

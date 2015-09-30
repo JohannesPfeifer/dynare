@@ -39,7 +39,8 @@ function [y, IRF_type, IRF_save_title]=get_IRFs(shock_vector,M_,oo_,options_,ite
 persistent time
 
 if iter==1
-time=zeros(n_irfs,1);
+    time=zeros(n_irfs,1);
+    skipline();
 end
 
 if options_.irf_opt.generalized_irf
@@ -47,18 +48,14 @@ if options_.irf_opt.generalized_irf
     tic_ID=tic;
     [GIRF] = Generalized_IRF(oo_.dr,M_,options_,shock_vector);
     time(iter)=toc(tic_ID);
-    if options_.verbosity
-        time_per_run=mean(time)/60; %compute average time for one run
-        if iter~=n_irfs %if not last run
-            dynare_fprintf(options_.verbosity,'Estimated time remaining: %4.1f minutes\n',time_per_run*(n_irfs-iter));
-        end
-    end
     y=GIRF.y;
     IRF_type='GIRF:';
     IRF_save_title='GIRF';
 elseif options_.irf_opt.ergodic_mean_irf
+    dynare_fprintf(options_.verbosity,'Computing Ergodic Mean Impulse Responses. Progress: %d of %d\n',iter,n_irfs)
     ex2=zeros(options_.irf,M_.exo_nbr);
     ex2(1,:)=shock_vector';
+    tic_ID=tic;
     if options_.order==2 && options_.pruning
       [out_withshock]= simult_(ergodicmean_no_shocks,oo_.dr,ex2,options_.order,y1st_start);
     elseif options_.order==3 && options_.pruning
@@ -67,6 +64,7 @@ elseif options_.irf_opt.ergodic_mean_irf
       [out_withshock]= simult_(ergodicmean_no_shocks,oo_.dr,ex2,options_.order);        
     end
     y = (out_withshock(:,2:end) - ergodicmean_no_shocks*ones(1,options_.irf));
+    time(iter)=toc(tic_ID);
     IRF_type='EM IRF:';
     IRF_save_title='EM_IRF';
 else
@@ -75,14 +73,15 @@ else
     y=irf(oo_.dr,shock_vector, options_.irf, options_.drop, ...
           options_.replic, options_.order);
     time(iter)=toc(tic_ID);
-    if options_.verbosity
-        time_per_run=mean(time)/60; %compute average time for one run
-        if iter~=n_irfs %if not last run
-            dynare_fprintf(options_.verbosity,'Estimated time remaining: %4.1f minutes\n',time_per_run*(n_irfs-iter));
-        end
-    end
     IRF_type='IRF:';
     IRF_save_title='IRF';
+end
+
+if options_.verbosity
+    time_per_run=mean(time(1:iter))/60; %compute average time for one run
+    if iter~=n_irfs %if not last run
+        dynare_fprintf(options_.verbosity,'Estimated time remaining: %4.1f minutes\n',time_per_run*(n_irfs-iter));
+    end
 end
 
 if options_.irf_opt.percent

@@ -64,7 +64,7 @@ if nargin<8
     xs=[];
 end
 
-if ~DynareOptions.pruning
+if DynareOptions.order>1 && ~DynareOptions.pruning
     error('GIRFs require the option pruning')
 end
 %------------------------------------------------------------------------------

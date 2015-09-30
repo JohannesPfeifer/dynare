@@ -60,7 +60,7 @@ ergodicmean_no_shocks=out_noshock(:,end,1);
 abs_change_EM=max(abs(ergodicmean_no_shocks-out_noshock(:,end-500)));
 % iterate if not convergence
 iter=1;      
-while abs_change_EM >options_.irf_opt.EM.tolf && iter<20
+while abs_change_EM >options_.irf_opt.EM.tolf && iter<options_.irf_opt.EM.iter
     dynare_fprintf(options_.verbosity,'\nConvergence not achieved. Maximum absolute change in function values over the last\n')
     dynare_fprintf(options_.verbosity,'500 draws: %2.1e. \n',abs_change_EM)
     dynare_fprintf(options_.verbosity,'Add another %d periods.\n',options_.irf_opt.EM.drop)
@@ -78,4 +78,16 @@ while abs_change_EM >options_.irf_opt.EM.tolf && iter<20
     ergodicmean_no_shocks=out_noshock(:,end); 
     abs_change_EM=max(abs(ergodicmean_no_shocks-out_noshock(:,end-500)));
     iter=iter+1;
+end
+if iter==options_.irf_opt.EM.iter
+    [junk,index]=max(abs(ergodicmean_no_shocks-out_noshock(:,end-500)));
+    error('Ergodic mean in the absence of shocks could not be computed. No convergence was achieved for variable %s',M_.endo_names(index,:));
+end
+if options_.debug
+    skipline()
+    disp('ERGODIC MEAN IN THE ABSENCE OF SHOCKS:')
+    skipline()
+    for variter=1:M_.orig_endo_nbr
+        fprintf('%s \t\t %g\n',M_.endo_names(variter,:),ergodicmean_no_shocks(variter));
+    end
 end

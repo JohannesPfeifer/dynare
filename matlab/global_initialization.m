@@ -836,12 +836,16 @@ options_.varobs_id=[]; %initialize field
 options_.max_memory_share=.25;
 
 %IRFs
-options_.irf_opt.generalized_irf=0;
-options_.irf_opt.ergodic_mean_irf=0;
+options_.irf_opt.generalized_irf=0; %Andreasen et al. (2011) GIRFs
+options_.irf_opt.ergodic_mean_irf=0; %FV et al. (2011) IRFs
 options_.irf_opt.EM.drop=5000;
 options_.irf_opt.EM.tolf=1e-12;
-options_.irf_opt.percent=0;
-options_.irf_opt.irf_shocks=[];
+options_.irf_opt.EM.iter=200;
+options_.irf_opt.percent=0; %scale by 100 to be in percent
+options_.irf_opt.irf_shocks=[]; %user specified shock size
+options_.irf_opt.irf_shock_graphtitles=[]; %user specified graph titles
+options_.irf_opt.stderr_multiples=0; %shock size specified in multiples of standard deviations
+options_.irf_opt.diagonal_only=0; %do orthogonalization if user specified shock size
 
 %GMM
 options_.gmm.decisionrules=0; %activate GMM estimation
