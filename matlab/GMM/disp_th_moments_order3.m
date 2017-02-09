@@ -36,6 +36,10 @@ function [gamma_y, var_mean, var_variance, autocorr]=disp_th_moments_order3(dr,M
 % along with Dynare.  If not, see <http://www.gnu.org/licenses/>.
 
 
+if options_.one_sided_hp_filter || options_.hp_filter || options_.bandpass.indicator
+    error(['disp_th_moments:: theoretical moments incompatible with filtering. Use simulated moments instead'])
+end
+
 nvar = length(i_var);
 [unconditionalmoments, gamma_y]=get_Moments_pruned_state_space(dr,M_,options_,dr.inv_order_var(i_var));
 
@@ -51,13 +55,15 @@ var_variance = gamma_y{1};
 
 if ~options_.noprint %options_.nomoments == 0
     title='THEORETICAL MOMENTS BASED ON PRUNED STATE SPACE';
-    if options_.hp_filter
-        error('Theoretical HP-filtered  moments not available')
-    end
     headers=char('VARIABLE','MEAN','STD. DEV.','VARIANCE');
     labels = deblank(M_.endo_names(i_var,:));
     lh = size(labels,2)+2;
-    dyntable(title,headers,labels,z,lh,11,4);
+    dyntable(options_,title,headers,labels,z,lh,11,4);
+    if options_.TeX
+        labels = deblank(M_.endo_names_tex(i_var,:));
+        lh = size(labels,2)+2;
+        dyn_latex_table(M_,options_,title,'th_moments',headers,labels,z,lh,11,4);
+    end        
 end
 
 if length(i1) == 0
@@ -69,16 +75,22 @@ end
 
 if options_.nocorr == 0 % && size(stationary_vars, 1) > 0
     corr = gamma_y{1}(i1,i1)./(sd(i1)*sd(i1)');
-    if ~options_.noprint,
-        disp(' ')
+    if options_.contemporaneous_correlation 
+        oo_.contemporaneous_correlation = corr;
+    end
+    if ~options_.noprint
+        skipline()
         title='MATRIX OF CORRELATIONS BASED ON PRUNED STATE SPACE';            
-        if options_.hp_filter
-            error('Theoretical HP-filtered moments not available')
-        end
         labels = deblank(M_.endo_names(i_var(i1),:));
         headers = char('Variables',labels);
         lh = size(labels,2)+2;
-        dyntable(title,headers,labels,corr,lh,8,4);
+        dyntable(options_,title,headers,labels,corr,lh,8,4);
+        if options_.TeX
+            labels = deblank(M_.endo_names_tex(i_var(i1),:));
+            headers=char('Variables',labels);
+            lh = size(labels,2)+2;
+            dyn_latex_table(M_,options_,title,'th_corr_matrix',headers,labels,corr,lh,8,4);
+        end
     end
 end
 if options_.ar > 0 %&& size(stationary_vars, 1) > 0
@@ -87,15 +99,18 @@ if options_.ar > 0 %&& size(stationary_vars, 1) > 0
         autocorr{i} = gamma_y{i+1};
         z(:,i) = diag(gamma_y{i+1}(i1,i1));
     end
-    if ~options_.noprint,      
-        disp(' ')    
+    if ~options_.noprint    
+        skipline()    
         title='COEFFICIENTS OF AUTOCORRELATION BASED ON PRUNED STATE SPACE';            
-        if options_.hp_filter        
-            error('Theoretical HP-filtered  moments not available')
-        end      
         labels = deblank(M_.endo_names(i_var(i1),:));      
         headers = char('Order ',int2str([1:options_.ar]'));
         lh = size(labels,2)+2;
-        dyntable(title,headers,labels,z,lh,8,4);
+        dyntable(options_,title,headers,labels,z,lh,8,4);
+        if options_.TeX
+            labels = deblank(M_.endo_names_tex(i_var(i1),:)); 
+            headers=char('Order ',int2str([1:options_.ar]'));
+            lh = size(labels,2)+2;
+            dyn_latex_table(M_,options_,title,'th_autocorr_matrix',headers,labels,z,lh,8,4);
+        end
     end  
 end
