@@ -48,7 +48,7 @@ if nargin<5
     end
 end
 % check if memory is sufficient
-if DynareOptions.order == 3
+if DynareOptions.order == 3 && ispc
     nx= Model.nspred+Model.exo_nbr;
     size_kronecker_matrix=nx^6*8;
     [user,sys] = memory;
