@@ -1450,9 +1450,9 @@ FilterInitialStateStatement::writeOutput(ostream &output, const string &basename
 
       output << "M_.filter_initial_state{"
              << symbol_table.getTypeSpecificID(symb_id) + 1
-             << "} = {'" << symbol_table.getName(symb_id) << "', ";
+             << "} = {'" << symbol_table.getName(symb_id) << "', '";
       it->second->writeOutput(output);
-      output << "};" << endl;
+      output << "'};" << endl;
     }
 }
 
