@@ -1421,7 +1421,7 @@ FilterInitialStateStatement::FilterInitialStateStatement(const filter_initial_st
 void
 FilterInitialStateStatement::writeOutput(ostream &output, const string &basename, bool minimal_workspace) const
 {
-  output << "M_.filter_initial_state = cell(M_.endo_nbr, 1);" << endl;
+  output << "M_.filter_initial_state = cell(M_.endo_nbr, 2);" << endl;
   for (filter_initial_state_elements_t::const_iterator it = filter_initial_state_elements.begin();
        it != filter_initial_state_elements.end(); it++)
     {
@@ -1448,11 +1448,11 @@ FilterInitialStateStatement::writeOutput(ostream &output, const string &basename
             }
         }
 
-      output << "M_.filter_initial_state{"
+      output << "M_.filter_initial_state("
              << symbol_table.getTypeSpecificID(symb_id) + 1
-             << "} = {'" << symbol_table.getName(symb_id) << "', '";
+             << ",:) = {'" << symbol_table.getName(symb_id) << "', '";
       it->second->writeOutput(output);
-      output << "'};" << endl;
+      output << ";'};" << endl;
     }
 }
 
