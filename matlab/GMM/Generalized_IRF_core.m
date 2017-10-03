@@ -40,7 +40,7 @@ function [GIRF] = Generalized_IRF_core(dr,options_,shockSize,vectorMom3,xf,xs)
 %
 % Based on code by Martin M. Andreasen, 2012
 %
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %

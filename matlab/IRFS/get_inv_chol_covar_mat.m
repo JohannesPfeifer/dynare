@@ -1,5 +1,5 @@
 function [inv_chol_s]=get_inv_chol_covar_mat(Sigma_e,diag_dummy)
-% function  [chol_s]=get_chol_covar_mat(Sigma_e,)
+% function  [chol_s]=get_chol_covar_mat(Sigma_e,diag_dummy)
 % compute inverse of lower triangular cholesky decomposition accounting for singularity
 %
 % INPUTS
@@ -11,7 +11,7 @@ function [inv_chol_s]=get_inv_chol_covar_mat(Sigma_e,diag_dummy)
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -39,4 +39,4 @@ singular_entries=find(diag(Sigma_e)==0); %make sure IRFs are not printed if sing
 if ~isempty(singular_entries)
     inv_chol_s(singular_entries,:)=0;
     inv_chol_s(:,singular_entries)=0;
-end                
+end

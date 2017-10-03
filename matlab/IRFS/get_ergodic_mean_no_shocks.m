@@ -1,5 +1,5 @@
-function [ergodicmean_no_shocks, y1st_start, y2nd_start, y3rd_start]= get_ergodic_mean_no_shocks(M_,oo_,options_)
-% [ergodicmean_no_shocks, y1st_start, y2nd_start, y3rd_start]= get_ergodic_mean_no_shocks(M_,oo_,options_)
+function [info,ergodicmean_no_shocks, y1st_start, y2nd_start, y3rd_start]= get_ergodic_mean_no_shocks(M_,oo_,options_)
+% [info,ergodicmean_no_shocks, y1st_start, y2nd_start, y3rd_start]= get_ergodic_mean_no_shocks(M_,oo_,options_)
 % computes ergodic mean in absence of shocks  
 %
 % INPUTS
@@ -8,6 +8,7 @@ function [ergodicmean_no_shocks, y1st_start, y2nd_start, y3rd_start]= get_ergodi
 %   options_:               Matlab's structure describing the options (initialized by dynare, see @ref{options_}).
 %
 % OUTPUTS
+%   info:                   error code
 %   ergodicmean_no_shocks:  ergodic mean in absence of shocks
 %   y1st_start:             starting value for linear term of pruned state space
 %   y2nd_start:             starting value for quadratic term of pruned state space
@@ -16,7 +17,7 @@ function [ergodicmean_no_shocks, y1st_start, y2nd_start, y3rd_start]= get_ergodi
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -39,7 +40,7 @@ y3rd_start=[];
 ergodicmean_no_shocks=[];
 
 if ~options_.irf_opt.ergodic_mean_irf % if not requested, return empty matrices
-return
+    return
 end
 
 ex1 = zeros(options_.irf+options_.irf_opt.EM.drop,M_.exo_nbr);
@@ -81,7 +82,10 @@ while abs_change_EM >options_.irf_opt.EM.tolf && iter<options_.irf_opt.EM.iter
 end
 if iter==options_.irf_opt.EM.iter
     [junk,index]=max(abs(ergodicmean_no_shocks-out_noshock(:,end-500)));
-    error('Ergodic mean in the absence of shocks could not be computed. No convergence was achieved for variable %s',M_.endo_names(index,:));
+    info=171;
+    dynare_fprintf(options_.verbosity,'Ergodic mean in the absence of shocks could not be computed. No convergence was achieved for variable %s',M_.endo_names(index,:))
+else
+    info=0;
 end
 if options_.debug
     skipline()

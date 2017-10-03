@@ -31,7 +31,7 @@ function [GIRF] = Generalized_IRF(dr,Model,DynareOptions,shocksize,control_indic
 %        GIRF.parts.xs      impulse responses at second order
 %        GIRF.parts.xrd     impulse responses at third order
 %
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %

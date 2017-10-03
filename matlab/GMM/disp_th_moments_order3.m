@@ -67,9 +67,9 @@ if ~options_.noprint %options_.nomoments == 0
 end
 
 if length(i1) == 0
-    disp(' ')
-    disp('All endogenous are constant or non stationary, not displaying correlations and auto-correlations')
-    disp(' ')
+    disp_verbose(' ',~options_.noprint)
+    disp_verbose('All endogenous are constant or non stationary, not displaying correlations and auto-correlations',~options_.noprint)
+    disp_verbose(' ',~options_.noprint)
     return;
 end
 

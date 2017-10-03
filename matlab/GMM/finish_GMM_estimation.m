@@ -1,5 +1,4 @@
 function [M_, options_, oo_] = finish_GMM_estimation(M_, options_, oo_)
-
 % function [M_, options_, oo_] = finish_gmm_estimation(M_, options_, oo_)
 % performs tidying up tasks after GMM estimation 
 %
@@ -16,7 +15,7 @@ function [M_, options_, oo_] = finish_GMM_estimation(M_, options_, oo_)
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %

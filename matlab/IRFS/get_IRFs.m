@@ -1,5 +1,5 @@
 function [y, IRF_type, IRF_save_title]=get_IRFs(shock_vector,M_,oo_,options_,iter,n_irfs,ergodicmean_no_shocks,y1st_start,y2nd_start,y3rd_start)
-% [y, IRF_type, IRF_save_title]=get_IRFs(M_,oo_,options_,i)
+% [y, IRF_type, IRF_save_title]=get_IRFs(shock_vector,M_,oo_,options_,iter,n_irfs,ergodicmean_no_shocks,y1st_start,y2nd_start,y3rd_start)
 % computes ergodic mean in absence of shocks  
 %
 % INPUTS
@@ -19,7 +19,7 @@ function [y, IRF_type, IRF_save_title]=get_IRFs(shock_vector,M_,oo_,options_,ite
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
