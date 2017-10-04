@@ -1,7 +1,6 @@
-function [M_, options_, oo_] = finish_SMM_estimation(M_, options_, oo_)
-
-% function [M_, options_, oo_] = finish_smm_estimation(M_, options_, oo_)
-% performs tidying up tasks after SMM estimation 
+function [M_, options_, oo_] = finish_GMM_SMM_estimation(M_, options_, oo_,case_string)
+% function [M_, options_, oo_] = finish_GMM_SMM_estimation(M_, options_, oo_)
+% performs tidying up tasks after GMM estimation 
 %
 % INPUTS
 %   M_:             Matlab's structure describing the Model (initialized by dynare, see @ref{M_}).
@@ -16,7 +15,7 @@ function [M_, options_, oo_] = finish_SMM_estimation(M_, options_, oo_)
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -36,7 +35,5 @@ function [M_, options_, oo_] = finish_SMM_estimation(M_, options_, oo_)
 
 warning('on','MATLAB:singularMatrix');
 %restore old options
-options_.irf=options_.smm.old_irf;
-options_.order=options_.smm.old_order;
-options_.smm=rmfield(options_.smm,'old_irf');
-options_.smm=rmfield(options_.smm,'old_order');
+options_.order=options_.(lower(case_string)).old_order;
+options_.(lower(case_string))=rmfield(options_.(lower(case_string)),'old_order');

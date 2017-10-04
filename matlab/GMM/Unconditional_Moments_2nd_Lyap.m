@@ -140,8 +140,10 @@ Var_inov(2*nx+1:2*nx+nx^2,2*nx+1:2*nx+nx^2) = ....
     *kron_sigeta_sigeta'; %p. 28
 
 % Computing the variances of the state variables, using the Lyaponov routine
-
-[Var_z]     = dlyap_doubling(A,Var_inov);
+[Var_z,errorflag] =disclyap_fast(A,Var_inov,options_.lyapunov_doubling_tol);
+if errorflag
+  error('Number of iterations in Doubling Algorithm exceeded without convergence.')        
+end
 
 % Var_z = lyapunov_symm(A,Var_inov,1e-10,1e-15,3); %use Dynare function
 % Var_z       = dlyap_doubling(A,Var_inov);

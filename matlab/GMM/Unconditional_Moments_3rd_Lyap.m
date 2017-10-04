@@ -130,11 +130,10 @@ BCov_xiLeadS_z = Get_BCov_xiLeadS_z(hx,hxx,hxxx,hssx,sigeta,sig,...
 const_term = Var_inov + BCov_xiLeadS_z*A' + A*BCov_xiLeadS_z';
 
 % Computing the variances of the state variables, using the Lyaponov routine
-%Var_z       = dlyap(A,const_term);
 dynare_fprintf(options_.verbosity,'Computing variance of the state variables. This might take some time.\n');
-[Var_z  error_mes]   = dlyap_doubling(A,const_term);
-if error_mes
-  error('Number of iterations in Doubling Algorithm exceeded without convergence.')
+[Var_z,errorflag] =disclyap_fast(A,const_term,options_.lyapunov_doubling_tol);
+if errorflag
+    error('Number of iterations in Doubling Algorithm exceeded without convergence.')
 end
 %Var_xf     = Var_z(1:nx,1:nx);
 %Var_xs     = Var_z(nx+1:2*nx,nx+1:2*nx);

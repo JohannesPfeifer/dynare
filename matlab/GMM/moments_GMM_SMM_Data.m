@@ -1,5 +1,5 @@
-function [dataMoments, E_y, E_yy, autoE_yy, m_data]= moments_GMM_Data(data,DynareOptions)
-% [dataMoments E_y E_yy autoE_yy m_data]= moments_GMM_Data(data,DynareOptions)
+function [dataMoments, E_y, E_yy, autoE_yy, m_data]= moments_GMM_SMM_Data(data,DynareOptions)
+% [dataMoments E_y E_yy autoE_yy m_data]= moments_GMM_SMM_Data(data,DynareOptions)
 % This function computes the following empirical moments from data
 %  - E[y]
 %  - E[y(i)*y(j)]       for i=1:ny and j=i,ny
@@ -10,7 +10,7 @@ function [dataMoments, E_y, E_yy, autoE_yy, m_data]= moments_GMM_Data(data,Dynar
 %   numMom      scalar                      number of selected moments
 %   DynareOptions                           Matlab's structure describing the options (initialized by dynare, see @ref{options_}).
 % 
-
+% OUTPUTS
 %   dataMoments [numMom x 1] vector         selected moments
 %   E_y         [ny x 1] vector             (un)centered first moments
 %   E_yy        [ny x ny] matrix            (un)centered contemporaneous second moments
@@ -20,7 +20,7 @@ function [dataMoments, E_y, E_yy, autoE_yy, m_data]= moments_GMM_Data(data,Dynar
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %

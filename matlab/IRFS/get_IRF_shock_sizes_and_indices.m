@@ -36,14 +36,14 @@ function [cs, irf_shocks_indx, irf_names, titles, titTeX]=get_IRF_shock_sizes_an
 if ~isempty(options_.irf_opt.irf_shocks) %if shock size specified
     if options_.irf_opt.stderr_multiples  % if specified in terms of standard deviations
         if options_.irf_opt.diagonal_only %if only diagonal entries
-            if options_.irf_opt.generalized_irf
+            if options_.irf_opt.analytical_GIRF
                 [inv_chol_s]=get_inv_chol_covar_mat(M_.Sigma_e,0);
                 cs=inv_chol_s*(diag(sqrt(diag(M_.Sigma_e)))*options_.irf_opt.irf_shocks);   %already in standard deviations
             else
                 cs=diag(sqrt(diag(M_.Sigma_e)))*options_.irf_opt.irf_shocks;
             end
         else %orthogonalization
-            if options_.irf_opt.generalized_irf %already in standard deviations, use correlation matrix
+            if options_.irf_opt.analytical_GIRF %already in standard deviations, use correlation matrix
                 cs = options_.irf_opt.irf_shocks;
             else
                 [chol_s]=get_chol_covar_mat(M_.Sigma_e);
@@ -52,14 +52,14 @@ if ~isempty(options_.irf_opt.irf_shocks) %if shock size specified
         end
     else % if specified in absolute terms
         if options_.irf_opt.diagonal_only %if only diagonal entries
-            if options_.irf_opt.generalized_irf %bring into in standard deviations
+            if options_.irf_opt.analytical_GIRF %bring into in standard deviations
                 [inv_chol_diag_s]=get_inv_chol_covar_mat(M_.Sigma_e,options_.irf_opt.diagonal_only);
                 cs = inv_chol_diag_s*options_.irf_opt.irf_shocks;
             else
                 cs=options_.irf_opt.irf_shocks;
             end
         else %orthogonalization
-            if options_.irf_opt.generalized_irf %bring into in standard deviations
+            if options_.irf_opt.analytical_GIRF %bring into in standard deviations
                 [inv_chol_s]=get_inv_chol_covar_mat(M_.Sigma_e,1);
                 cs = inv_chol_s*options_.irf_opt.irf_shocks;
             else
@@ -97,7 +97,7 @@ if ~isempty(options_.irf_opt.irf_shocks) %if shock size specified
         end
     end
 else  %if shock size not specified
-    if options_.irf_opt.generalized_irf %bring into in standard deviations
+    if options_.irf_opt.analytical_GIRF %bring into in standard deviations
         if options_.irf_opt.diagonal_only %if only diagonal entries
             [inv_chol_s]=get_inv_chol_covar_mat(M_.Sigma_e,options_.irf_opt.diagonal_only);
             cs = inv_chol_s*diag(sqrt(diag(M_.Sigma_e)));

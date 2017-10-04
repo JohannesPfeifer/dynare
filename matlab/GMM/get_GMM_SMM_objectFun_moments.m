@@ -1,24 +1,24 @@
-function [SE] = get_Standard_Errors_GMM(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults)
-% [SE] = get_Standard_Errors_GMM(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults)
-% This function computes standard errors to the GMM estimates
-% By Martin Andreasen
-
+function [moments_difference]=get_GMM_SMM_objectFun_moments(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMM_SMM_info,DynareResults,BoundsInfo,GMM_SMM_indicator)
+% [moments_difference]=get_GMM_SMM_objectFun_moments(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMM_SMM_info,DynareResults,BoundsInfo,GMM_SMM_indicator)
+% Returns the moments difference as the first output argument for computation of the Standard Errors via numerical differentiation
 % INPUTS 
-%   o xparam1:                  initial value of estimated parameters as returned by set_prior()
+%   o xparam1:        initial value of estimated parameters as returned by set_prior()
 %   o DynareDataset:            data after required transformation
 %   o DynareOptions             Matlab's structure describing the options (initialized by dynare, see @ref{options_}).
 %   o Model                     Matlab's structure describing the Model (initialized by dynare, see @ref{M_}).          
 %   o EstimatedParameters:      Matlab's structure describing the estimated_parameters (initialized by dynare, see @ref{estim_params_}).
 %   o GMMInfo                   Matlab's structure describing the GMM settings (initialized by dynare, see @ref{bayesopt_}).
 %   o DynareResults             Matlab's structure gathering the results (initialized by dynare, see @ref{oo_}).
+%   o BoundsInfo                Matlab's structure containing prior bounds
+%   o GMM_SMM_indicator         string indicating SMM or GMM
 %  
 % OUTPUTS 
-%   o SE                       [nparam x 1] vector of standard errors
+%   o moments_difference        [numMom x 1] vector with difference between data and model moments 
 %
 % SPECIAL REQUIREMENTS
 %   None.
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -35,19 +35,11 @@ function [SE] = get_Standard_Errors_GMM(xparam1,DynareDataset,DynareOptions,Mode
 % You should have received a copy of the GNU General Public License
 % along with Dynare.  If not, see <http://www.gnu.org/licenses/>.
 
-
-% Get the Jacobian of the moment difference function
-D = fdjac('get_GMM_objectFun_moments',xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults);
-
-W=DynareResults.gmm.W;
-Wopt=DynareResults.gmm.Wopt;
-
-T    = DynareDataset.info.ntobs; %Number of observations
-
-if ~DynareOptions.gmm.optimal_weighting
-    AVar = 1/T*eye(length(xparam1),length(xparam1))*((D'*W*D)\D'*W/Wopt*W*D/(D'*W*D));
-else
-    AVar = 1/T*eye(length(xparam1),length(xparam1))/(D'*W*D);
+% Evaluating the objective function to get modelMoments
+if strcmp(GMM_SMM_indicator,'GMM')
+    [fval,info,exit_flag,moments_difference] ...
+    = GMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMM_SMM_info,BoundsInfo,DynareResults);    
+elseif strcmp(GMM_SMM_indicator,'SMM')
+    [fval,info,exit_flag,moments_difference] ...
+    = SMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMM_SMM_info,BoundsInfo,DynareResults);    
 end
-
-SE   = sqrt(diag(AVar));

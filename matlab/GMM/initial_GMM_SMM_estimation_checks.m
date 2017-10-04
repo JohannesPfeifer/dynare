@@ -1,5 +1,5 @@
-function DynareResults = initial_SMM_estimation_checks(objective_function,xparam1,DynareDataset,Model,EstimatedParameters,DynareOptions,SMMinfo,DynareResults)
-% function initial_estimation_checks(xparam1,gend,data,data_index,number_of_observations,no_more_missing_observations)
+function DynareResults = initial_GMM_SMM_estimation_checks(objective_function,xparam1,DynareDataset,Model,EstimatedParameters,DynareOptions,SMM_GMMinfo,BoundsInfo,DynareResults,GMM_SMM_indicator)
+% DynareResults = initial_GMM_SMM_estimation_checks(objective_function,xparam1,DynareDataset,Model,EstimatedParameters,DynareOptions,SMM_GMMinfo,BoundsInfo,DynareResults,GMM_SMM_indicator)
 % Checks data (complex values, initial values, BK conditions,..)
 %
 % INPUTS
@@ -8,15 +8,17 @@ function DynareResults = initial_SMM_estimation_checks(objective_function,xparam
 %    Model:                     Matlab's structure describing the Model (initialized by dynare, see @ref{M_}).
 %    EstimatedParameters:       Matlab's structure describing the estimated_parameters (initialized by dynare, see @ref{estim_params_}).
 %    DynareOptions              Matlab's structure describing the options (initialized by dynare, see @ref{options_}).
-%    SMMInfo                    Matlab's structure describing the SMM settings (initialized by dynare, see @ref{bayesopt_}).
+%    SMM_GMMinfo                Matlab's structure describing the GMM settings (initialized by dynare, see @ref{bayesopt_}).
+%    BoundsInfo                 Matlab's structure containing prior bounds
 %    DynareResults              Matlab's structure gathering the results (initialized by dynare, see @ref{oo_}).
+%    GMM_SMM_indicator          string indicating SMM or GMM
 % OUTPUTS
 %    DynareResults     structure of temporary results
 %
 % SPECIAL REQUIREMENTS
 %    none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -33,17 +35,22 @@ function DynareResults = initial_SMM_estimation_checks(objective_function,xparam
 % You should have received a copy of the GNU General Public License
 % along with Dynare.  If not, see <http://www.gnu.org/licenses/>.
 
-if DynareDataset.info.nvobs>Model.exo_nbr+EstimatedParameters.nvn
-    error(['initial_estimation_checks:: Estimation can''t take place because there are less declared shocks than observed variables!'])
+if DynareOptions.order>1 && any(any(isnan(DynareDataset.data)))
+    error('initial_GMM_SMM_estimation_checks:: GMM/SMM does not support missing observations')
 end
 
 if EstimatedParameters.nvn || EstimatedParameters.ncn
-    error('SMM does not support measurment error(s). Please specifiy them as a structural shock')
+    error('initial_GMM_SMM_estimation_checks:: GMM/SMM does not support measurement error(s). Please specifiy them as a structural shock')
+end
+
+if ~isempty(DynareOptions.endogenous_prior_restrictions.irf) && ~isempty(DynareOptions.endogenous_prior_restrictions.moment)
+    error(['initial_GMM_SMM_estimation_checks:: Endogenous prior restrictions are not supported.'])
 end
 
 % Evaluate the moment-function.
 tic_id=tic;
-[fval,moments_difference,modelMoments,exit_flag,junk2,junk3,info] = SMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,DynareResults);
+
+[fval,info,exit_flag,moments_difference,modelMoments] = feval(objective_function,xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMM_GMMinfo,BoundsInfo,DynareResults);
 elapsed_time=toc(tic_id);
 if isnan(fval)
     error('The initial value of the target function is NaN')
@@ -58,15 +65,15 @@ end
 fprintf('Time required to compute moments once: %5.4f seconds \n', elapsed_time);
 
 data_mean=abs(mean(DynareDataset.data'));
-if DynareOptions.smm.centeredmoments
+if DynareOptions.(lower(GMM_SMM_indicator)).centeredmoments
     if sum(data_mean)/size(DynareDataset.data,1) >1e-9
         fprintf('The mean of the data is:\n')
         disp(data_mean);
-        error('You are trying to perform SMM estimation with centered moments using uncentered data.')
+        error('You are trying to perform GMM/SMM estimation with centered moments using uncentered data.')
     end
-elseif ~isempty(data_mean(DynareOptions.smm.firstmoment_selector==1)) %if first moments are used
-    if sum(data_mean(DynareOptions.smm.firstmoment_selector==1))/sum(DynareOptions.smm.firstmoment_selector==1) <1e-2
-        warning('You are trying to perform SMM estimation with uncentered moments, but the data are (almost) mean 0. Check if this is desired.')
+elseif ~isempty(data_mean(DynareOptions.(lower(GMM_SMM_indicator)).firstmoment_selector==1)) %if first moments are used
+    if sum(data_mean(DynareOptions.(lower(GMM_SMM_indicator)).firstmoment_selector==1))/sum(DynareOptions.(lower(GMM_SMM_indicator)).firstmoment_selector==1) <1e-2
+        warning('You are trying to perform GMM estimation with uncentered moments, but the data are (almost) mean 0. Check if this is desired.')
     end    
 end
 

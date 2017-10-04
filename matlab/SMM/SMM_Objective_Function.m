@@ -1,7 +1,7 @@
-function [fval,moments_difference,modelMoments,exit_flag,junk1,junk2,info,Model,DynareOptions,SMMinfo,DynareResults]...
-    = SMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,DynareResults)
-% [fval,moments_difference,modelMoments,exit_flag,ys,trend_coeff,info,Model,DynareOptions,SMMinfo,DynareResults]...
-%    = SMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,DynareResults)
+function [fval,info,exit_flag,moments_difference,modelMoments,junk1,junk2,Model,DynareOptions,SMMinfo,DynareResults]...
+    = SMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,BoundsInfo,DynareResults)
+% [fval,info,exit_flag,moments_difference,modelMoments,junk1,junk2,Model,DynareOptions,SMMinfo,DynareResults]...
+%    = SMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,BoundsInfo,DynareResults)
 % This function evaluates the objective function for SMM estimation
 %
 % INPUTS
@@ -11,6 +11,7 @@ function [fval,moments_difference,modelMoments,exit_flag,junk1,junk2,info,Model,
 %   o Model                     Matlab's structure describing the Model (initialized by dynare, see @ref{M_}).          
 %   o EstimatedParameters:      Matlab's structure describing the estimated_parameters (initialized by dynare, see @ref{estim_params_}).
 %   o SMMInfo                   Matlab's structure describing the SMM settings (initialized by dynare, see @ref{bayesopt_}).
+%   o BoundsInfo                Matlab's structure containing prior bounds
 %   o DynareResults             Matlab's structure gathering the results (initialized by dynare, see @ref{oo_}).
 %
 % OUTPUTS
@@ -27,7 +28,7 @@ function [fval,moments_difference,modelMoments,exit_flag,junk1,junk2,info,Model,
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -60,40 +61,46 @@ modelMoments=NaN(SMMinfo.numMom,1);
 %------------------------------------------------------------------------------
 
 % Return, with endogenous penalty, if some parameters are smaller than the lower bound of the parameters.
-if ~isequal(DynareOptions.mode_compute,1) && any(xparam1<SMMinfo.lb)
-    k = find(xparam1<SMMinfo.lb);
-    fval = objective_function_penalty_base+sum((SMMinfo.lb(k)-xparam1(k)).^2);
+if ~isequal(DynareOptions.mode_compute,1) && any(xparam1<BoundsInfo.lb)
+    k = find(xparam1<BoundsInfo.lb);
+    fval = Inf;
     exit_flag = 0;
-    info = 41;
+    info(1) = 41;
+    info(4)= sum((BoundsInfo.lb(k)-xparam1(k)).^2);
     return
 end
 
 % Return, with endogenous penalty, if some parameters are greater than the upper bound of the parameters.
-if ~isequal(DynareOptions.mode_compute,1) && any(xparam1>SMMinfo.ub)
-    k = find(xparam1>SMMinfo.ub);
-    fval = objective_function_penalty_base+sum((xparam1(k)-SMMinfo.ub(k)).^2);
+if ~isequal(DynareOptions.mode_compute,1) && any(xparam1>BoundsInfo.ub)
+    k = find(xparam1>BoundsInfo.ub);
+    fval = Inf;
     exit_flag = 0;
-    info = 42;
+    info(1) = 42;
+    info(4)= sum((xparam1(k)-BoundsInfo.ub(k)).^2);
     return
 end
 
 % Set all parameters
 Model = set_all_parameters(xparam1,EstimatedParameters,Model);
 
-
 % Test if Q is positive definite.
-Q = Model.Sigma_e;
-if EstimatedParameters.ncx
-    % Try to compute the cholesky decomposition of Q (possible iff Q is positive definite)
-    [CholQ,testQ] = chol(Q);
-    if testQ
-        % The variance-covariance matrix of the structural innovations is not definite positive. We have to compute the eigenvalues of this matrix in order to build the endogenous penalty.
-        a = diag(eig(Q));
-        k = find(a < 0);
-        if k > 0
-            fval = objective_function_penalty_base+sum(-a(k));
+if ~issquare(Model.Sigma_e) || EstimatedParameters.ncx || isfield(EstimatedParameters,'calibrated_covariances')
+    [Q_is_positive_definite, penalty] = ispd(Model.Sigma_e(EstimatedParameters.Sigma_e_entries_to_check_for_positive_definiteness,EstimatedParameters.Sigma_e_entries_to_check_for_positive_definiteness));
+    if ~Q_is_positive_definite
+        fval = Inf;
+        exit_flag = 0;
+        info(1) = 43;
+        info(4) = penalty;
+        return
+    end
+    if isfield(EstimatedParameters,'calibrated_covariances')
+        correct_flag=check_consistency_covariances(Model.Sigma_e);
+        if ~correct_flag
+            penalty = sum(Model.Sigma_e(EstimatedParameters.calibrated_covariances.position).^2);
+            fval = Inf;
             exit_flag = 0;
-            info = 43;
+            info(1) = 71;
+            info(4) = penalty;
             return
         end
     end
@@ -105,23 +112,32 @@ end
 
 [dr_dynare_state_space,info,Model,DynareOptions,DynareResults] = resol(0,Model,DynareOptions,DynareResults);
 
-if info(1) == 1 || info(1) == 2 || info(1) == 5 || info(1) == 7 || info(1) ...
-            == 8 || info(1) == 22 || info(1) == 24 || info(1) == 19 || info(1) == 9
-    fval = objective_function_penalty_base+1;
-    info = info(1);
-    exit_flag = 0;
-    return
-elseif info(1) == 3 || info(1) == 4 || info(1)==6 || info(1) == 20 || info(1) == 21  || info(1) == 23
-    fval = objective_function_penalty_base+info(2);
-    info = info(1);
-    exit_flag = 0;
-    return
+% Return, with endogenous penalty when possible, if dynare_resolve issues an error code (defined in resol).
+if info(1)
+    if info(1) == 3 || info(1) == 4 || info(1) == 5 || info(1)==6 ||info(1) == 19 ||...
+                info(1) == 20 || info(1) == 21 || info(1) == 23 || info(1) == 26 || ...
+                info(1) == 81 || info(1) == 84 ||  info(1) == 85 ||  info(1) == 86
+        %meaningful second entry of output that can be used
+        fval = Inf;
+        info(4) = info(2);
+        exit_flag = 0;
+        return
+    else
+        fval = Inf;
+        info(4) = 0.1;
+        exit_flag = 0;
+        return
+    end
 end
 
-if info(1)
-    fval = NaN;
-    return;
-end
+% % check endogenous prior restrictions
+% info=endogenous_prior_restrictions(T,R,Model,DynareOptions,DynareResults);
+% if info(1)
+%     fval = Inf;
+%     info(4)=info(2);
+%     exit_flag = 0;
+%     return
+% end
 
 %------------------------------------------------------------------------------
 % 3. Compute Moments of the model solution for normal innovations
@@ -138,7 +154,10 @@ scaled_shock_series(:,i_exo_var) = DynareResults.smm.shock_series(:,i_exo_var)*c
 y_sim = simult_(dr_dynare_state_space.ys,dr_dynare_state_space,scaled_shock_series,DynareOptions.order);
 
 if any(any(isnan(y_sim))) || any(any(isinf(y_sim)))
-    fval= objective_function_penalty_base;
+    fval = Inf;
+    info(1)=180;
+    info(4) = 0.1;
+    exit_flag = 0;
     return
 end
 y_sim_after_burnin = y_sim(SMMinfo.varsindex,end-DynareOptions.smm.long:end)';
@@ -146,7 +165,7 @@ autolag=max(DynareOptions.smm.autolag);
 if DynareOptions.smm.centeredmoments
    y_sim_after_burnin=bsxfun(@minus,y_sim_after_burnin,mean(y_sim_after_burnin,1)); 
 end
-[modelMoments, E_y, E_yy, autoE_yy] = moments_SMM_Data(y_sim_after_burnin,DynareOptions);
+[modelMoments, E_y, E_yy, autoE_yy] = moments_GMM_SMM_Data(y_sim_after_burnin,DynareOptions);
 % write centered and uncentered simulated moments to results
 DynareResults.smm.unconditionalmoments.E_y=E_y;
 DynareResults.smm.unconditionalmoments.E_yy=E_yy;
@@ -160,8 +179,7 @@ DynareResults.smm.unconditionalmoments.Cov_y=autoE_yy-repmat(E_y*E_y',[1 1 autol
 moments_difference = DynareResults.smm.datamoments.momentstomatch-modelMoments;
 fval = moments_difference'*DynareResults.smm.W*moments_difference;
 
-if DynareOptions.smm.use_prior
+if DynareOptions.smm.penalized_estimator
     fval=fval+(xparam1-SMMinfo.p1)'/diag(SMMinfo.p2)*(xparam1-SMMinfo.p1);
 end
 end
-

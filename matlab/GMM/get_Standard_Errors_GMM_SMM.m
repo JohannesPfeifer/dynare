@@ -1,16 +1,17 @@
-function [SE] = get_Standard_Errors_SMM(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,DynareResults)
-% [SE] = get_Standard_Errors_SMM(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,DynareResults)
-% This function computes standard errors to the SMM estimates
-% By Martin Andreasen
-
+function [SE] = get_Standard_Errors_GMM_SMM(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults,BoundsInfo,GMM_SMM_indicator)
+% [SE] = get_Standard_Errors_GMM_SMM(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults,BoundsInfo,GMM_SMM_indicator)
+% This function computes standard errors to the GMM estimates
+%
 % INPUTS 
 %   o xparam1:                  initial value of estimated parameters as returned by set_prior()
 %   o DynareDataset:            data after required transformation
 %   o DynareOptions             Matlab's structure describing the options (initialized by dynare, see @ref{options_}).
 %   o Model                     Matlab's structure describing the Model (initialized by dynare, see @ref{M_}).          
 %   o EstimatedParameters:      Matlab's structure describing the estimated_parameters (initialized by dynare, see @ref{estim_params_}).
-%   o SMMInfo                   Matlab's structure describing the SMM settings (initialized by dynare, see @ref{bayesopt_}).
+%   o GMMInfo                   Matlab's structure describing the GMM settings (initialized by dynare, see @ref{bayesopt_}).
 %   o DynareResults             Matlab's structure gathering the results (initialized by dynare, see @ref{oo_}).
+%   o BoundsInfo                Matlab's structure containing prior bounds
+%   o GMM_SMM_indicator         string indicating SMM or GMM
 %  
 % OUTPUTS 
 %   o SE                       [nparam x 1] vector of standard errors
@@ -18,7 +19,7 @@ function [SE] = get_Standard_Errors_SMM(xparam1,DynareDataset,DynareOptions,Mode
 % SPECIAL REQUIREMENTS
 %   None.
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -37,16 +38,22 @@ function [SE] = get_Standard_Errors_SMM(xparam1,DynareDataset,DynareOptions,Mode
 
 
 % Get the Jacobian of the moment difference function
-D = fdjac('get_SMM_objectFun_moments',xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,SMMinfo,DynareResults);
-
-W=DynareResults.smm.W;
-Wopt=DynareResults.smm.Wopt;
-
-T    = DynareDataset.info.ntobs; %Number of observations
-
-if ~DynareOptions.smm.optimal_weighting
-    AVar = 1/T*DynareResults.smm.variance_correction_factor*eye(length(xparam1),length(xparam1))*((D'*W*D)\D'*W/Wopt*W*D/(D'*W*D));
-else
-    AVar = 1/T*DynareResults.smm.variance_correction_factor*eye(length(xparam1),length(xparam1))/(D'*DynareResults.smm.W*D);
+D = fjaco('get_GMM_SMM_objectFun_moments',xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults,BoundsInfo,GMM_SMM_indicator);
+if strcmp(GMM_SMM_indicator,'SMM')
+    Variance_correction_factor=DynareResults.smm.variance_correction_factor;
+elseif strcmp(GMM_SMM_indicator,'GMM')
+    Variance_correction_factor=1;
 end
+
+
+W=DynareResults.(lower(GMM_SMM_indicator)).W;
+T    = DynareDataset.nobs; %Number of observations
+
+if ~strcmp('optimal',DynareOptions.(lower(GMM_SMM_indicator)).weighting_matrix)
+    Wopt=DynareResults.(lower(GMM_SMM_indicator)).Wopt;
+    AVar = 1/T*Variance_correction_factor*eye(length(xparam1),length(xparam1))*((D'*W*D)\D'*W/Wopt*W*D/(D'*W*D));
+else
+    AVar = 1/T*Variance_correction_factor*eye(length(xparam1),length(xparam1))/(D'*W*D);
+end
+
 SE   = sqrt(diag(AVar));

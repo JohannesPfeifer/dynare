@@ -43,7 +43,7 @@ if iter==1
     skipline();
 end
 
-if options_.irf_opt.generalized_irf
+if options_.irf_opt.analytical_GIRF
     dynare_fprintf(options_.verbosity,'Computing Generalized Impulse Responses. Progress: %d of %d\n',iter,n_irfs)
     tic_ID=tic;
     [GIRF] = Generalized_IRF(oo_.dr,M_,options_,shock_vector);

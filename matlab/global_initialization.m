@@ -836,8 +836,8 @@ options_.varobs_id=[]; %initialize field
 options_.max_memory_share=.25;
 
 %IRFs
-options_.irf_opt.generalized_irf=0; %Andreasen et al. (2011) GIRFs
-options_.irf_opt.ergodic_mean_irf=0; %FV et al. (2011) IRFs
+options_.irf_opt.analytical_GIRF=0; %Andreasen et al. (2017) GIRFs
+options_.irf_opt.ergodic_mean_irf=0; %Born/Pfeifer (2014) IRFs
 options_.irf_opt.EM.drop=5000;
 options_.irf_opt.EM.tolf=1e-12;
 options_.irf_opt.EM.iter=200;
@@ -848,32 +848,26 @@ options_.irf_opt.stderr_multiples=0; %shock size specified in multiples of stand
 options_.irf_opt.diagonal_only=0; %do orthogonalization if user specified shock size
 
 %GMM
-options_.gmm.decisionrules=0; %activate GMM estimation
 options_.gmm.order=3; %order of approximation for GMM 
 options_.gmm.centeredmoments=0; % use centered moments
 options_.gmm.verbose=1;
 options_.gmm.autolag=1:5; %number of autocovariances
 options_.gmm.recursive_estimation=1; %start at order=1 and iterate over higher orders
-options_.gmm.mode_compute=9;
-options_.gmm.irf=20; %number of periods for GIRFs 
 options_.gmm.qLag=10; %bandwith in optimal weighting matrix
-options_.gmm.optimal_weighting=1; %dummy for use of optimal weighting matrix
+options_.gmm.weighting_matrix='identity_matrix'; %selector for weighting matrix
 options_.gmm.firstmoment_selector=[]; %selector matrix to choose individual first moments
-options_.gmm.use_prior=0; %use prior
+options_.gmm.penalized_estimator=0; %use penalized estimator
 
 %SMM
-options_.smm.decisionrules=0;%activate SMM estimation
 options_.smm.order=3; %order of approximation for SMM 
 options_.smm.centeredmoments=0; % use centered moments
 options_.smm.verbose=1;
 options_.smm.autolag=1:5; %number of autocovariances
 options_.smm.recursive_estimation=1;  %start at order=1 and iterate over higher orders
-options_.smm.mode_compute=9;
-options_.smm.irf=20; %number of periods for GIRFs 
 options_.smm.qLag=10; %bandwith in optimal weighting matrix
-options_.smm.optimal_weighting=1; %dummy for use of optimal weighting matrix
+options_.smm.weighting_matrix='identity_matrix'; %selector for weighting matrix
 options_.smm.firstmoment_selector=[]; %selector matrix to choose individual first moments
-options_.smm.use_prior=0; %use prior
+options_.smm.penalized_estimator=0; %use penalized estimator
 options_.smm.simulation_multiple=5; %multiple of the data length used for simulation
 options_.smm.drop=500; % number of periods dropped at beginning of simulation
 options_.smm.seed=1; %seed used in simulations

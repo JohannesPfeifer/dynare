@@ -178,6 +178,8 @@ if ~noprint
         error('STOCH_SIMUL: Analytical moments at third order lead to an error. Execution cancelled.')
       case 171
         error('STOCH_SIMUL: Ergodic mean in the absence of shocks/stochastic steady state could not be computed.')
+      case 180
+        error('SMM: Simulations were explosive, resulting in NaN/Inf.')
       otherwise
         error('This case shouldn''t happen. Contact the authors of Dynare')
     end

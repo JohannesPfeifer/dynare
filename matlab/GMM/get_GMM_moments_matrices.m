@@ -1,5 +1,5 @@
-function [DynareResults]=get_GMM_moments_matrices(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults);
-% [DynareResults]=get_GMM_moments_matrices(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults);
+function [DynareResults]=get_GMM_moments_matrices(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults,BoundsInfo);
+% [DynareResults]=get_GMM_moments_matrices(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults,BoundsInfo);
 % Computes the (auto-)correlation from the covariances and writes the
 % moments to the results structure
 % 
@@ -11,6 +11,7 @@ function [DynareResults]=get_GMM_moments_matrices(xparam1,DynareDataset,DynareOp
 %   o EstimatedParameters:      Matlab's structure describing the estimated_parameters (initialized by dynare, see @ref{estim_params_}).
 %   o GMMInfo                   Matlab's structure describing the GMM settings (initialized by dynare, see @ref{bayesopt_}).
 %   o DynareResults             Matlab's structure gathering the results (initialized by dynare, see @ref{oo_}).
+%   o BoundsInfo                Matlab's structure containing prior bounds
 %  
 % OUTPUTS 
 %   o DynareResults             Matlab's structure gathering the results
@@ -18,7 +19,7 @@ function [DynareResults]=get_GMM_moments_matrices(xparam1,DynareDataset,DynareOp
 % SPECIAL REQUIREMENTS
 %   None.
 
-% Copyright (C) 2013 Dynare Team
+% Copyright (C) 2013-17 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -40,8 +41,8 @@ function [DynareResults]=get_GMM_moments_matrices(xparam1,DynareDataset,DynareOp
 % 1. get moments at parameter values and pass decision rules at xparam1 to DynareResults
 %------------------------------------------------------------------------------
 
-[fval,moments_difference,modelMoments,exit_flag,ys,trend_coeff,info,Model,DynareOptions,GMMinfo,DynareResults]...
-    = GMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,DynareResults);
+[fval,info,exit_flag,moments_difference,modelMoments,junk1,junk2,Model,DynareOptions,GMMinfo,DynareResults]...
+    = GMM_Objective_Function(xparam1,DynareDataset,DynareOptions,Model,EstimatedParameters,GMMinfo,BoundsInfo,DynareResults);
 
 %------------------------------------------------------------------------------
 % 2. compute correlations
