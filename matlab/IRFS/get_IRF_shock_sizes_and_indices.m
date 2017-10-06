@@ -71,31 +71,16 @@ if ~isempty(options_.irf_opt.irf_shocks) %if shock size specified
     end
     n_irfs=size(cs,2);
     irf_shocks_indx = (1:n_irfs);
-    % set the titles
-    if isempty(options_.irf_opt.irf_shock_graphtitles)
-        irf_names='shock_vec_1';
-        titles='shock_vec_1';
-        for ii=1:n_irfs
-            irf_names = char(irf_names, ['shock_vec_',num2str(ii+1)]);
-            titles = char(titles, ['shock_vec_',num2str(ii+1)]);
-        end
-        if options_.TeX
-            titTeX(M_.exo_names_orig_ord,:) = M_.exo_names_tex; %to be fixed
-        else
-            titTeX=[];
-        end
-    else
         if size(options_.irf_opt.irf_shock_graphtitles,1)~=n_irfs
             error('Number of Titles and number of irfs do not match');
         end
-        irf_names=options_.irf_opt.irf_shock_graphtitles;
-        titles=options_.irf_opt.irf_shock_graphtitles;
+        irf_names=char(options_.irf_opt.irf_shock_graphtitles);
+        titles=char(options_.irf_opt.irf_shock_graphtitles);
         if options_.TeX
             titTeX(M_.exo_names_orig_ord,:) = M_.exo_names_tex; %to be fixed
         else
             titTeX=[];
         end
-    end
 else  %if shock size not specified
     if options_.irf_opt.analytical_GIRF %bring into in standard deviations
         if options_.irf_opt.diagonal_only %if only diagonal entries
