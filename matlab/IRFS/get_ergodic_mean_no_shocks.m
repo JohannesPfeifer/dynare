@@ -34,6 +34,7 @@ function [info,ergodicmean_no_shocks, y1st_start, y2nd_start, y3rd_start]= get_e
 % You should have received a copy of the GNU General Public License
 % along with Dynare.  If not, see <http://www.gnu.org/licenses/>.
 
+info=0;
 y1st_start=[];
 y2nd_start=[];
 y3rd_start=[];
