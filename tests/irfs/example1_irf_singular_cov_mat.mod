@@ -141,10 +141,11 @@ options_.irf_opt.ergodic_mean_irf=0;
 //*************************************************************************
 
 //*******************set user specified shocks as multiple of standard deviations
-setshocksandnames_std_err_mult;
-options_.irf_opt.irf_shocks=set_shock_vector_IRFs(shocks,shock_size,M_);
-
-//*******************
+generate_irfs;
+e, e=2,u=0;
+u, u=2,e=0;
+e_u,e=2,u=2;
+end;
 
 
 stoch_simul(order=1,nomoments,noprint,stderr_multiples) y c k a b;
@@ -162,7 +163,7 @@ end
 
 //********GIRFs
 options_.irf_opt.ergodic_mean_irf=0;
-options_.irf_opt.analytical_GIRF=1;
+options_.irf_opt.analytical_GIRF=0;
 
 stoch_simul(order=1,nomoments,noprint,stderr_multiples,analytical_GIRF) y c k a b;
 G_irf=[y_e c_e k_e a_e b_e];
@@ -178,8 +179,11 @@ options_.irf_opt.analytical_GIRF=0;
 options_.irf_opt.ergodic_mean_irf=0;
 //******************************************************************************
 
-setshocksandnames_std_err_mult;
-options_.irf_opt.irf_shocks=set_shock_vector_IRFs(shocks,shock_size,M_);
+generate_irfs;
+e, e=2,u=0;
+u, u=2,e=0;
+e_u,e=2,u=2;
+end;
 
 //*******************
 
