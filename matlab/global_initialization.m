@@ -842,10 +842,6 @@ options_.irf_opt.EM.drop=5000;
 options_.irf_opt.EM.tolf=1e-12;
 options_.irf_opt.EM.iter=200;
 options_.irf_opt.percent=0; %scale by 100 to be in percent
-options_.irf_opt.irf_shocks=[]; %user specified shock size
-options_.irf_opt.irf_shock_graphtitles=[]; %user specified graph titles
-options_.irf_opt.stderr_multiples=0; %shock size specified in multiples of standard deviations
-options_.irf_opt.diagonal_only=0; %do orthogonalization if user specified shock size
 
 %GMM
 options_.gmm.order=3; %order of approximation for GMM 
