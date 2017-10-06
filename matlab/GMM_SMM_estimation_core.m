@@ -6,7 +6,7 @@ function [M_,oo_,estim_params_,bayestopt_,dataset_,dataset_info]=GMM_SMM_estimat
 %   var_list_:          selected endogenous variables vector
 %   M_:                 [structure] decribing the model
 %   options_:           [structure] describing the options
-%   oo__                [structure] storing the results
+%   oo_                 [structure] storing the results
 %   estim_params_:      [structure] characterizing parameters to be estimated
 %   bayestopt_:         [structure] describing the priors
 %   dataset_:           [dseries] object storing the dataset
@@ -114,13 +114,7 @@ else
 end
 oo_.(lower(case_string)).SE = get_Standard_Errors_GMM_SMM(xparam1,dataset_,options_,M_,estim_params_,bayestopt_,oo_,bounds,case_string);
 oo_=display_estimation_results_table(xparam1,oo_.(lower(case_string)).SE,M_,options_,estim_params_,bayestopt_,oo_,pnames,case_string,case_string);
-if options_.irf
-    if isempty(var_list_)
-        oo_.(lower(case_string)).GIRF=get_GIRFs(oo_,M_,options_,M_.endo_names);
-    else
-        oo_.(lower(case_string)).GIRF=get_GIRFs(oo_,M_,options_,var_list_);
-    end
-end
 M_ = set_all_parameters(xparam1,estim_params_,M_);
 oo_.(lower(case_string)).J_test = compute_J_statistic_GMM_SMM(xparam1,dataset_,options_,M_,estim_params_,bayestopt_,oo_,bounds,case_string);
+
 [M_, options_, oo_] = finish_GMM_SMM_estimation(M_, options_, oo_,case_string); %currrently not used as we do not return options_
