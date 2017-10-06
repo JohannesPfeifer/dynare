@@ -98,6 +98,4 @@ stoch_simul(irf=20,order=2,relative_irf,nomoments,nofunctions);
 relative_irfs_order_2=cell2mat(struct2cell(oo_.irfs));
 if max(max(abs(unit_irf_order_2-relative_irfs_order_2)))>2e-4;
      error('relative_irf-option at order=2 is broken')
-end
-
-             
+end             
