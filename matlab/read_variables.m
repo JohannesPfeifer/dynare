@@ -91,7 +91,7 @@ switch (extension)
   case { '.xls', '.xlsx' }
     [freq,init,data,varlist] = load_xls_file_data(fullname,xls_sheet,xls_range);
     for dyn_i_01=1:var_size_01
-        iv = strmatch(strtrim(var_names_01(dyn_i_01,:)),varlist,'exact');
+        iv = strmatch(strtrim(var_names_01{dyn_i_01}),varlist,'exact');
         if ~isempty(iv)
             dyn_tmp_01 = [data(:,iv)]';
             if length(dyn_tmp_01) > dyn_size_01 && dyn_size_01 > 0
@@ -101,7 +101,7 @@ switch (extension)
             dyn_data_01(:,dyn_i_01) = dyn_tmp_01;
         else
             cd(old_pwd)
-            error([strtrim(var_names_01(dyn_i_01,:)) ' not found in ' fullname])
+            error([strtrim(var_names_01{dyn_i_01}) ' not found in ' fullname])
         end
     end
   case '.csv'
