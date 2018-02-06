@@ -116,7 +116,7 @@ x = repmat(transpose(steadystate_x), 1+M.maximum_exo_lag+M.maximum_exo_lead, 1);
 [d1, jacobian] = dynamicmodel(z, x, params, steadystate_y, M.maximum_exo_lag+1);
 
 % Check that the dynamic model was evaluated at the steady state.
-if max(abs(d1))>1e-12
+if max(abs(d1))>options.solve_tolf
     error('Jacobian is not evaluated at the steady state!')
 end
 
