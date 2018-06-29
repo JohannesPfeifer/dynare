@@ -4,16 +4,29 @@ function  [par, logpost, accepted, neval] = posterior_sampler_iteration(TargetFu
 % posterior samplers
 %
 % INPUTS
-%   posterior_sampler_options:       posterior sampler options
-%   options_:       structure storing the options
-
+%   TargetFun:              string storing the objective function (e.g. 'dsge_likelihood.m')     
+%   last_draw:              parameter vector in last iteration
+%   last_posterior:         value of the posterior in last iteration
+%   sampler_options:        posterior sampler options
+%   dataset_:               the dataset after required transformation
+%   dataset_info:           Various informations about the dataset (descriptive statistics and missing observations).
+%   options_:               structure storing the options
+%   M_:                     structure storing the model information
+%   estim_params_:          structure storing information about estimated parameters
+%   bayestopt_:             structure storing information about priors
+%   mh_bounds:              structure containing prior bounds            
+%   oo_:                    structure storing the results
+%
 % OUTPUTS
-%   posterior_sampler_options:       checked posterior sampler options
+%   par:                    last accepted parameter vector
+%   logpost:                value of the posterior after current iteration
+%   accepted:               share of proposed draws that were accepted 
+%   neval:                  number of evaluations (>1 only for slice)                  
 %
 % SPECIAL REQUIREMENTS
 %   none
 
-% Copyright (C) 2015-16 Dynare Team
+% Copyright (C) 2015-18 Dynare Team
 %
 % This file is part of Dynare.
 %
@@ -121,28 +134,31 @@ switch posterior_sampling_method
         else
             logpost = -inf;
         end
-        %get ratio of proposal densities, required because proposal depends
-        %on current mode via Hessian and is thus not symmetric anymore
-        if strcmpi(sampler_options.proposal_distribution,'rand_multivariate_normal')
-            proposal_density_proposed_move_forward=multivariate_normal_pdf(proposed_par,xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
-            proposal_density_proposed_move_backward=multivariate_normal_pdf(par_start_current_block',xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
-        elseif strcmpi(sampler_options.proposal_distribution,'rand_multivariate_student')
-            proposal_density_proposed_move_forward=multivariate_student_pdf(proposed_par,xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
-            proposal_density_proposed_move_backward=multivariate_student_pdf(par_start_current_block',xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
-        end
-        accprob=logpost-last_posterior+ log(proposal_density_proposed_move_backward)-log(proposal_density_proposed_move_forward); %Formula (6), Chib/Ramamurthy
-
-        if (logpost > -inf) && (log(rand) < accprob)
-            current_draw(indices(blocks==block_iter,1))=proposed_par;
-            last_posterior=logpost;
-            accepted_draws_counter =accepted_draws_counter +1;
-        else %no updating
-             %do nothing, keep old value
+        
+        if (logpost > -inf)
+            %get ratio of proposal densities, required because proposal depends
+            %on current mode via Hessian and is thus not symmetric anymore
+            if strcmpi(sampler_options.proposal_distribution,'rand_multivariate_normal')
+                proposal_density_proposed_move_forward=multivariate_normal_pdf(proposed_par,xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
+                proposal_density_proposed_move_backward=multivariate_normal_pdf(par_start_current_block',xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
+            elseif strcmpi(sampler_options.proposal_distribution,'rand_multivariate_student')
+                proposal_density_proposed_move_forward=multivariate_student_pdf(proposed_par,xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
+                proposal_density_proposed_move_backward=multivariate_student_pdf(par_start_current_block',xopt_current_block',proposal_covariance_Cholesky_decomposition_upper,n);
+            end
+            accprob=logpost-last_posterior+ log(proposal_density_proposed_move_backward)-log(proposal_density_proposed_move_forward); %Formula (6), Chib/Ramamurthy
+            if  (log(rand) < accprob)
+                current_draw(indices(blocks==block_iter,1))=proposed_par;
+                last_posterior=logpost;
+                accepted_draws_counter =accepted_draws_counter +1;
+            else %no updating
+                %do nothing, keep old value
+            end
         end
     end
     accepted=accepted_draws_counter/blocked_draws_counter;
     par = current_draw;
     neval=1;
+    logpost = last_posterior; %make sure not a temporary draw is returned;
   case 'independent_metropolis_hastings'
     neval = 1;
     ProposalFun = sampler_options.proposal_distribution;
